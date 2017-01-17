@@ -102,18 +102,21 @@ cache_req_user_by_id_dpreq_params(TALLOC_CTX *mem_ctx,
     return EOK;
 }
 
-struct cache_req_plugin cache_req_user_by_id = {
+const struct cache_req_plugin cache_req_user_by_id = {
     .name = "User by ID",
     .dp_type = SSS_DP_USER,
     .attr_expiration = SYSDB_CACHE_EXPIRE,
     .parse_name = false,
     .bypass_cache = false,
     .only_one_result = true,
-    .allow_missing_fqn = false,
+    .search_all_domains = false,
+    .require_enumeration = false,
+    .allow_missing_fqn = true,
     .allow_switch_to_upn = false,
     .upn_equivalent = CACHE_REQ_SENTINEL,
-    .get_next_domain_flags = 0,
+    .get_next_domain_flags = SSS_GND_DESCEND,
 
+    .is_well_known_fn = NULL,
     .prepare_domain_data_fn = NULL,
     .create_debug_name_fn = cache_req_user_by_id_create_debug_name,
     .global_ncache_add_fn = cache_req_user_by_id_global_ncache_add,

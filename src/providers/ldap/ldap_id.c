@@ -76,7 +76,6 @@ struct tevent_req *users_get_send(TALLOC_CTX *memctx,
                                   const char *filter_value,
                                   int filter_type,
                                   const char *extra_value,
-                                  int attrs_type,
                                   bool noexist_delete)
 {
     struct tevent_req *req;
@@ -303,7 +302,6 @@ struct tevent_req *users_get_send(TALLOC_CTX *memctx,
         goto done;
     }
 
-    /* TODO: handle attrs_type */
     ret = build_attrs_from_map(state, ctx->opts->user_map,
                                ctx->opts->user_map_cnt,
                                NULL, &state->attrs, NULL);
@@ -653,7 +651,6 @@ struct tevent_req *groups_get_send(TALLOC_CTX *memctx,
                                    struct sdap_id_conn_ctx *conn,
                                    const char *filter_value,
                                    int filter_type,
-                                   int attrs_type,
                                    bool noexist_delete,
                                    bool no_members)
 {
@@ -839,7 +836,6 @@ struct tevent_req *groups_get_send(TALLOC_CTX *memctx,
     member_filter[0] = (const char *)ctx->opts->group_map[SDAP_AT_GROUP_MEMBER].name;
     member_filter[1] = NULL;
 
-    /* TODO: handle attrs_type */
     ret = build_attrs_from_map(state, ctx->opts->group_map, SDAP_OPTS_GROUP,
                                (state->domain->ignore_group_members
                                     || state->no_members) ?
@@ -1356,7 +1352,6 @@ static struct tevent_req *get_user_and_group_send(TALLOC_CTX *memctx,
                                                   struct sdap_id_conn_ctx *conn,
                                                   const char *filter_value,
                                                   int filter_type,
-                                                  int attrs_type,
                                                   bool noexist_delete);
 
 errno_t sdap_get_user_and_group_recv(struct tevent_req *req,
@@ -1425,7 +1420,6 @@ sdap_handle_acct_req_send(TALLOC_CTX *mem_ctx,
                                 ar->filter_value,
                                 ar->filter_type,
                                 ar->extra_value,
-                                ar->attr_type,
                                 noexist_delete);
         break;
 
@@ -1434,7 +1428,6 @@ sdap_handle_acct_req_send(TALLOC_CTX *mem_ctx,
                                  sdom, conn,
                                  ar->filter_value,
                                  ar->filter_type,
-                                 ar->attr_type,
                                  noexist_delete, false);
         break;
 
@@ -1444,11 +1437,6 @@ sdap_handle_acct_req_send(TALLOC_CTX *mem_ctx,
                 && ar->filter_type != BE_FILTER_UUID) {
             ret = EINVAL;
             state->err = "Invalid filter type";
-            goto done;
-        }
-        if (ar->attr_type != BE_ATTR_CORE) {
-            ret = EINVAL;
-            state->err = "Invalid attr type";
             goto done;
         }
 
@@ -1500,7 +1488,6 @@ sdap_handle_acct_req_send(TALLOC_CTX *mem_ctx,
                                          sdom, conn,
                                          ar->filter_value,
                                          ar->filter_type,
-                                         ar->attr_type,
                                          noexist_delete);
         break;
 
@@ -1515,7 +1502,6 @@ sdap_handle_acct_req_send(TALLOC_CTX *mem_ctx,
                                          sdom, conn,
                                          ar->filter_value,
                                          ar->filter_type,
-                                         ar->attr_type,
                                          noexist_delete);
         break;
 
@@ -1531,7 +1517,6 @@ sdap_handle_acct_req_send(TALLOC_CTX *mem_ctx,
                                          sdom, conn,
                                          ar->filter_value,
                                          ar->filter_type,
-                                         ar->attr_type,
                                          noexist_delete);
         break;
 
@@ -1541,7 +1526,6 @@ sdap_handle_acct_req_send(TALLOC_CTX *mem_ctx,
                                 ar->filter_value,
                                 ar->filter_type,
                                 ar->extra_value,
-                                ar->attr_type,
                                 noexist_delete);
         break;
 
@@ -1671,7 +1655,6 @@ struct get_user_and_group_state {
 
     const char *filter_val;
     int filter_type;
-    int attrs_type;
 
     char *filter;
     const char **attrs;
@@ -1691,7 +1674,6 @@ static struct tevent_req *get_user_and_group_send(TALLOC_CTX *memctx,
                                                   struct sdap_id_conn_ctx *conn,
                                                   const char *filter_val,
                                                   int filter_type,
-                                                  int attrs_type,
                                                   bool noexist_delete)
 {
     struct tevent_req *req;
@@ -1723,14 +1705,13 @@ static struct tevent_req *get_user_and_group_send(TALLOC_CTX *memctx,
     state->sysdb = sdom->dom->sysdb;
     state->filter_val = filter_val;
     state->filter_type = filter_type;
-    state->attrs_type = attrs_type;
 
     subreq = groups_get_send(req, state->ev, state->id_ctx,
                              state->sdom, state->conn,
                              state->filter_val, state->filter_type,
-                             state->attrs_type, state->noexist_delete, false);
+                             state->noexist_delete, false);
     if (subreq == NULL) {
-        DEBUG(SSSDBG_OP_FAILURE, "users_get_send failed.\n");
+        DEBUG(SSSDBG_OP_FAILURE, "groups_get_send failed.\n");
         ret = ENOMEM;
         goto fail;
     }
@@ -1790,9 +1771,9 @@ static void get_user_and_group_groups_done(struct tevent_req *subreq)
     subreq = users_get_send(req, state->ev, state->id_ctx,
                             state->sdom, user_conn,
                             state->filter_val, state->filter_type, NULL,
-                            state->attrs_type, state->noexist_delete);
+                            state->noexist_delete);
     if (subreq == NULL) {
-        DEBUG(SSSDBG_OP_FAILURE, "groups_get_send failed.\n");
+        DEBUG(SSSDBG_OP_FAILURE, "users_get_send failed.\n");
         tevent_req_error(req, ENOMEM);
         return;
     }

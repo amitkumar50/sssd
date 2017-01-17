@@ -19,7 +19,6 @@
 
 import hashlib
 import base64
-import urllib
 import time
 import ldap
 import os
@@ -30,13 +29,19 @@ import sys
 from util import *
 from ds import DS
 
+try:
+    from urllib import quote as url_quote
+except ImportError:
+    from urllib.parse import quote as url_quote
+
 
 def hash_password(password):
     """Generate userPassword value for a password."""
     salt = os.urandom(4)
-    hash = hashlib.sha1(password)
+    hash = hashlib.sha1(password.encode('utf-8'))
     hash.update(salt)
-    return "{SSHA}" + base64.standard_b64encode(hash.digest() + salt)
+    hash_base64 = base64.standard_b64encode(hash.digest() + salt)
+    return "{SSHA}" + hash_base64.decode('utf-8')
 
 
 class DSOpenLDAP(DS):
@@ -161,7 +166,7 @@ class DSOpenLDAP(DS):
             ["slapadd", "-F", self.conf_slapd_d_dir, "-b", "cn=config"],
             stdin=subprocess.PIPE, close_fds=True
         )
-        slapadd.communicate(config)
+        slapadd.communicate(config.encode('utf-8'))
         if slapadd.returncode != 0:
             raise Exception("Failed to add configuration with slapadd")
 
@@ -183,7 +188,7 @@ class DSOpenLDAP(DS):
     def setup(self):
         """Setup the instance."""
         ldapi_socket = self.run_dir + "/ldapi"
-        ldapi_url = "ldapi://" + urllib.quote(ldapi_socket, "")
+        ldapi_url = "ldapi://" + url_quote(ldapi_socket, "")
         url_list = ldapi_url + " " + self.ldap_url
 
         os.makedirs(self.conf_slapd_d_dir)
@@ -228,15 +233,15 @@ class DSOpenLDAP(DS):
         #
         modlist = [
             (ldap.MOD_DELETE, "olcObjectClasses",
-             "{7}( 2.5.6.9 NAME 'groupOfNames' "
-             "DESC 'RFC2256: a group of names (DNs)' SUP top "
-             "STRUCTURAL MUST ( member $ cn ) MAY ( businessCategory $ "
-             "seeAlso $ owner $ ou $ o $ description ) )"),
+             b"{7}( 2.5.6.9 NAME 'groupOfNames' "
+             b"DESC 'RFC2256: a group of names (DNs)' SUP top "
+             b"STRUCTURAL MUST ( member $ cn ) MAY ( businessCategory $ "
+             b"seeAlso $ owner $ ou $ o $ description ) )"),
             (ldap.MOD_ADD, "olcObjectClasses",
-             "{7}( 2.5.6.9 NAME 'groupOfNames' "
-             "DESC 'RFC2256: a group of names (DNs)' SUP top "
-             "STRUCTURAL MUST ( cn ) MAY ( member $ businessCategory $ "
-             "seeAlso $ owner $ ou $ o $ description ) )"),
+             b"{7}( 2.5.6.9 NAME 'groupOfNames' "
+             b"DESC 'RFC2256: a group of names (DNs)' SUP top "
+             b"STRUCTURAL MUST ( cn ) MAY ( member $ businessCategory $ "
+             b"seeAlso $ owner $ ou $ o $ description ) )"),
         ]
         ldap_conn = ldap.initialize(ldapi_url)
         ldap_conn.simple_bind_s(self.admin_rdn + ",cn=config", self.admin_pw)
@@ -249,15 +254,15 @@ class DSOpenLDAP(DS):
         ldap_conn = ldap.initialize(self.ldap_url)
         ldap_conn.simple_bind_s(self.admin_dn, self.admin_pw)
         ldap_conn.add_s(self.base_dn, [
-            ("objectClass", ["dcObject", "organization"]),
-            ("o", "Example Company"),
+            ("objectClass", [b"dcObject", b"organization"]),
+            ("o", b"Example Company"),
         ])
         ldap_conn.add_s("cn=Manager," + self.base_dn, [
-            ("objectClass", "organizationalRole"),
+            ("objectClass", b"organizationalRole"),
         ])
         for ou in ("Users", "Groups", "Netgroups", "Services", "Policies"):
             ldap_conn.add_s("ou=" + ou + "," + self.base_dn, [
-                ("objectClass", ["top", "organizationalUnit"]),
+                ("objectClass", [b"top", b"organizationalUnit"]),
             ])
         ldap_conn.unbind_s()
 

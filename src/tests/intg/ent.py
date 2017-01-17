@@ -106,7 +106,7 @@ def _diff(ent, pattern, desc_map={}):
         if not isinstance(ent, dict):
             return "not a dict, " + str(type(ent))
 
-        for key, value in pattern.iteritems():
+        for key, value in pattern.items():
             item_name, item_map = _get_desc(desc_map, key)
             d = _diff(ent[key], value, item_map)
             if d:
@@ -123,7 +123,7 @@ def _diff(ent, pattern, desc_map={}):
                 if not d:
                     pattern_matches[pi] += 1
 
-        unmatched_pattern = [pattern[pi] for pi in xrange(0, len(pattern))
+        unmatched_pattern = [pattern[pi] for pi in range(0, len(pattern))
                              if pattern_matches[pi] == 0]
 
         items = _get_desc(desc_map, None)[0] + "s"
@@ -144,9 +144,9 @@ def _diff(ent, pattern, desc_map={}):
                     pattern_matches[pi] += 1
                     ent_matches[ei] += 1
 
-        unmatched_pattern = [pattern[pi] for pi in xrange(0, len(pattern))
+        unmatched_pattern = [pattern[pi] for pi in range(0, len(pattern))
                              if pattern_matches[pi] == 0]
-        unmatched_ent = [ent[pi] for pi in xrange(0, len(ent))
+        unmatched_ent = [ent[pi] for pi in range(0, len(ent))
                          if ent_matches[pi] == 0]
 
         items = _get_desc(desc_map, None)[0] + "s"
@@ -233,7 +233,7 @@ def get_passwd_list():
     for i, v in enumerate(passwd_list):
         if v.pw_name == "root" and v.pw_uid == 0 and v.pw_gid == 0:
             del passwd_list[i]
-            return map(_convert_passwd, passwd_list)
+            return list(map(_convert_passwd, passwd_list))
     raise Exception("no root user found")
 
 
@@ -393,7 +393,7 @@ def get_group_list():
     for i, v in enumerate(group_list):
         if v.gr_name == "root" and v.gr_gid == 0:
             del group_list[i]
-            return map(_convert_group, group_list)
+            return list(map(_convert_group, group_list))
     raise Exception("no root group found")
 
 
