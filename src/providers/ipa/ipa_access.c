@@ -122,6 +122,16 @@ static errno_t ipa_purge_hbac(struct sss_domain_info *domain);
 static errno_t ipa_save_hbac(struct sss_domain_info *domain,
                              struct ipa_fetch_hbac_state *state);
 
+bool ipa_check_fqdn(const char *str){
+    const char ch = '.';
+    char *ret;
+    ret = strchr(str, ch);
+    if(ret){
+        return true;
+    }
+    return false;
+}
+
 static struct tevent_req *
 ipa_fetch_hbac_send(TALLOC_CTX *mem_ctx,
                     struct tevent_context *ev,
@@ -353,6 +363,12 @@ static void ipa_fetch_hbac_services_done(struct tevent_req *subreq)
         DEBUG(SSSDBG_CRIT_FAILURE,
               "Missing ipa_hostname, this should never happen.\n");
         ret = EINVAL;
+        goto done;
+    }
+    if(!ipa_check_fqdn(ipa_hostname)){
+        DEBUG(SSSDBG_CRIT_FAILURE,
+            "ipa_hostname is not Fully Qualified Domain Name.\n");
+        ret = ERR_WRONG_NAME_FORMAT;
         goto done;
     }
 

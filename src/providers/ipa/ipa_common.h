@@ -290,6 +290,7 @@ errno_t ipa_idmap_init(TALLOC_CTX *mem_ctx,
                        struct sdap_id_ctx *id_ctx,
                        struct sdap_idmap_ctx **_idmap_ctx);
 
+bool ipa_check_fqdn(const char *str);
 
 struct krb5_ctx *ipa_init_get_krb5_auth_ctx(void *data);
 #endif /* _IPA_COMMON_H_ */

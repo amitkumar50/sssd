@@ -94,6 +94,13 @@ int ipa_get_options(TALLOC_CTX *memctx,
         }
     }
 
+    if(!ipa_check_fqdn(ipa_hostname)){
+        DEBUG(SSSDBG_CRIT_FAILURE,
+            "ipa_hostname is not Fully Qualified Domain Name.\n");
+        ret = ERR_WRONG_NAME_FORMAT;
+        goto done;
+    }
+
     /* First check whether the realm has been manually specified */
     realm = dp_opt_get_string(opts->basic, IPA_KRB5_REALM);
     if (!realm) {
