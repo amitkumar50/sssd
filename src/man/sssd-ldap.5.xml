@@ -1778,7 +1778,16 @@
                             principal used for authentication to the directory.
                             This option can either contain the full principal (for
                             example host/myhost@EXAMPLE.COM) or just the principal name
-                            (for example host/myhost).
+			    (for example host/myhost). Priority of lookup is as follows:
+			    <programlisting>
+our.hostname@REALM or host/our.hostname@REALM depending on the input
+SHORT.HOSTNAME$@REALM (AD domain)
+host/our.hostname@REALM
+foobar$@REALM (AD domain)
+host/foobar@REALM
+host/foo@BAR
+pick the first principal in the keytab
+                        </programlisting>
                         </para>
                         <para>
                             Default: host/hostname@REALM
